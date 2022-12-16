@@ -1,4 +1,4 @@
-package parsers
+package tools
 
 data class Location(val input: String, val position: Int) {
     fun <A> addOffset(result: Success<A>) = copy(position = position + result.consumed)
@@ -16,8 +16,8 @@ class ParseException(msg: String) : RuntimeException(msg)
 
 typealias Parser<A> = (Location) -> Result<A>
 
-fun <A> run(p: Parser<A>, input: String): A =
-    when (val result = p(Location(input, 0))) {
+fun <A> run(parser: Parser<A>, input: String): A =
+    when (val result = parser(Location(input, 0))) {
         is Success -> result.a
         is Failure -> throw ParseException(
             "Failed to parse $input\n" +
@@ -61,6 +61,7 @@ fun <A, S> Parser<A>.list(separator: Parser<S>): Parser<List<A>> = { startLocati
                     false
                 }
             }
+
             is Failure -> false
         }
     } while (tryForMore)
@@ -68,10 +69,10 @@ fun <A, S> Parser<A>.list(separator: Parser<S>): Parser<List<A>> = { startLocati
     Success(result.toList(), location.position - startLocation.position)
 }
 
-infix fun <A> Parser<A>.or(pb: Parser<A>): Parser<A> = { location ->
+infix fun <A> Parser<A>.or(pb: () -> Parser<A>): Parser<A> = { location ->
     when (val aResult = this(location)) {
         is Success -> aResult
-        is Failure -> pb(location)
+        is Failure -> pb()(location)
     }
 }
 
@@ -90,6 +91,7 @@ infix fun <A, B> Parser<A>.seq(pb: Parser<B>): Parser<Pair<A, B>> = { startLocat
                 is Failure -> bResult
             }
         }
+
         is Failure -> aResult
     }
 }
@@ -103,18 +105,62 @@ fun <A, B> Parser<A>.flatMap(f: (A) -> Parser<B>): Parser<B> = TODO()
 
 
 fun main() {
-    assert(run(string("exact"), "exact   ") == "exact")
+    assert(
+        run(
+            string("exact"),
+            "exact   "
+        ) == "exact"
+    )
+    assert(
+        run(
+            int(),
+            "6542342  "
+        ) == 6542342
+    )
 
-    assert(run(int(), "6542342  ") == 6542342)
+    assert(
+        run(
+            int().list(string(", ")),
+            "6542342  "
+        ) == listOf(6542342)
+    )
+    assert(
+        run(
+            int().list(string(", ")),
+            "65, 42, 34,2  "
+        ) == listOf(65, 42, 34)
+    )
 
-    assert(run(int().list(string(", ")), "6542342  ") == listOf(6542342))
-    assert(run(int().list(string(", ")), "65, 42, 34,2  ") == listOf(65,42,34))
+    assert(
+        run(
+            string("alpha") or { string("beta") },
+            "alpha "
+        ) == "alpha"
+    )
+    assert(
+        run(
+            string("alpha") or { string("beta") },
+            "beta "
+        ) == "beta"
+    )
 
-    assert(run(string("alpha") or string("beta"), "alpha ") == "alpha")
-    assert(run(string("alpha") or string("beta"), "beta ") == "beta")
+    assert(
+        run(
+            string("[") seq int() seq string("]"),
+            "[42]"
+        ) == Pair(Pair("[", 42), "]")
+    )
 
-    assert(run(string("[") seq int() seq string("]"), "[42]") == Pair(Pair("[", 42), "]"))
-
-    assert(run(int().list(string(",")).surround("[", "]"), "[42]") == listOf(42))
-    assert(run(int().list(string(",")).surround("[", "]"), "[42,45,]") == listOf(42,45))
+    assert(
+        run(
+            int().list(string(",")).surround("[", "]"),
+            "[42]"
+        ) == listOf(42)
+    )
+    assert(
+        run(
+            int().list(string(",")).surround("[", "]"),
+            "[42,45,]"
+        ) == listOf(42, 45)
+    )
 }

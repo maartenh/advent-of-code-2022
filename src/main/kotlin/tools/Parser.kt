@@ -34,9 +34,10 @@ fun string(s: String): Parser<String> = { location ->
 }
 
 fun int(): Parser<Int> = { loc ->
-    val digits = loc.input.substring(loc.position).takeWhile { it.isDigit() }
+    val minus = if (loc.input[loc.position] == '-') { 1 } else { 0 }
+    val digits = loc.input.substring(loc.position + minus).takeWhile { it.isDigit() }
     if (digits.isNotEmpty()) {
-        Success(digits.toInt(), digits.length)
+        Success(digits.toInt() * (1 - 2*minus), digits.length + minus)
     } else {
         Failure(loc.toError("Expected integer"))
     }

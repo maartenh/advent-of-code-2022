@@ -6,13 +6,13 @@ import tools.Parser
 import tools.int
 import tools.list
 import tools.map
-import tools.run
+import tools.runParser
 import tools.seq
 import tools.string
 
 class Day14 : Day() {
     override fun part1(input: Lines): Any {
-        val paths = input.map { run(path(), it) }
+        val paths = input.map { runParser(path(), it) }
 
         val rocks = paths.flatMap { it.allPoints() }.toSet()
         val sand = mutableSetOf<Point>()
@@ -47,7 +47,7 @@ class Day14 : Day() {
     }
 
     override fun part2(input: Lines): Any {
-        val paths = input.map { run(path(), it) }
+        val paths = input.map { runParser(path(), it) }
 
         val rocks = paths.flatMap { it.allPoints() }.toSet()
         val sand = mutableSetOf<Point>()

@@ -16,7 +16,7 @@ class ParseException(msg: String) : RuntimeException(msg)
 
 typealias Parser<A> = (Location) -> Result<A>
 
-fun <A> run(parser: Parser<A>, input: String): A =
+fun <A> runParser(parser: Parser<A>, input: String): A =
     when (val result = parser(Location(input, 0))) {
         is Success -> result.a
         is Failure -> throw ParseException(
@@ -30,6 +30,14 @@ fun string(s: String): Parser<String> = { location ->
         Success(s, s.length)
     } else {
         Failure(location.toError("Expected string value $s"))
+    }
+}
+
+fun string(length: Int): Parser<String> = { location ->
+    if (location.input.length >= location.position + length) {
+        Success(location.input.substring(location.position, location.position + length), length)
+    } else {
+        Failure(location.toError("Expected string of length $length"))
     }
 }
 
@@ -107,59 +115,65 @@ fun <A, B> Parser<A>.flatMap(f: (A) -> Parser<B>): Parser<B> = TODO()
 
 fun main() {
     assert(
-        run(
+        runParser(
             string("exact"),
             "exact   "
         ) == "exact"
     )
     assert(
-        run(
+        runParser(
+            string(2),
+            "exact   "
+        ) == "ex"
+    )
+    assert(
+        runParser(
             int(),
             "6542342  "
         ) == 6542342
     )
 
     assert(
-        run(
+        runParser(
             int().list(string(", ")),
             "6542342  "
         ) == listOf(6542342)
     )
     assert(
-        run(
+        runParser(
             int().list(string(", ")),
             "65, 42, 34,2  "
         ) == listOf(65, 42, 34)
     )
 
     assert(
-        run(
+        runParser(
             string("alpha") or { string("beta") },
             "alpha "
         ) == "alpha"
     )
     assert(
-        run(
+        runParser(
             string("alpha") or { string("beta") },
             "beta "
         ) == "beta"
     )
 
     assert(
-        run(
+        runParser(
             string("[") seq int() seq string("]"),
             "[42]"
         ) == Pair(Pair("[", 42), "]")
     )
 
     assert(
-        run(
+        runParser(
             int().list(string(",")).surround("[", "]"),
             "[42]"
         ) == listOf(42)
     )
     assert(
-        run(
+        runParser(
             int().list(string(",")).surround("[", "]"),
             "[42,45,]"
         ) == listOf(42, 45)

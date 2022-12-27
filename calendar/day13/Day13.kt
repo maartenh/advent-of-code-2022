@@ -30,15 +30,15 @@ class Day13 : Day() {
         .splitAt { it.isEmpty() }
         .map {
             Pair(
-                run(packet(), it.first()),
-                run(packet(), it.last())
+                runParser(packet(), it.first()),
+                runParser(packet(), it.last())
             )
         }
 
     private fun parsePackets(input: Lines) = input
         .filter { it.isNotEmpty() }
         .map {
-            run(packet(), it)
+            runParser(packet(), it)
         }
 
     sealed interface Packet : Comparable<Packet>

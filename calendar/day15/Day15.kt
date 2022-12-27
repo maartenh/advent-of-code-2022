@@ -8,7 +8,7 @@ import kotlin.math.abs
 
 class Day15 : Day() {
     override fun part1(input: Lines): Any {
-        val sensors = input.map { run(sensor(), it) }
+        val sensors = input.map { runParser(sensor(), it) }
 
         val mergedRanges = rowCoverage(sensors, 2_000_000)
 
@@ -42,7 +42,7 @@ class Day15 : Day() {
     }
 
     override fun part2(input: Lines): Any {
-        val sensors = input.map { run(sensor(), it) }
+        val sensors = input.map { runParser(sensor(), it) }
 
         val maxCoordinate = 4_000_000
         val range = 0..maxCoordinate

@@ -13,7 +13,6 @@ class Day16 : Day() {
         val reducedTunnelMap = reduceMap(map = tunnelMap, toNodes = openableValves, startNode = tunnelMap["AA"]!!)
 
         val bestVentActions = findMaxVent(
-//            reducedTunnelMap["AA"]!!,
             listOf(Path("AA", 0)),
             tunnelMap = reducedTunnelMap,
             openableValves = openableValves.map { it.name }.toSet(),
@@ -26,7 +25,6 @@ class Day16 : Day() {
         return if (bestVentActions != null) {
             println(bestVentActions.second.reversed().joinToString("\n"))
             bestVentActions.first
-            // 1862
         } else {
             -1
         }
@@ -39,7 +37,6 @@ class Day16 : Day() {
         val reducedTunnelMap = reduceMap(map = tunnelMap, toNodes = openableValves, startNode = tunnelMap["AA"]!!)
 
         val bestVentActions = findMaxVent(
-//            reducedTunnelMap["AA"]!!,
             listOf(Path("AA", 0), Path("AA", 0)),
             tunnelMap = reducedTunnelMap,
             openableValves = openableValves.map { it.name }.toSet(),
@@ -52,7 +49,6 @@ class Day16 : Day() {
         return if (bestVentActions != null) {
             println(bestVentActions.second.reversed().joinToString("\n"))
             bestVentActions.first
-            // ????
         } else {
             -1
         }
@@ -93,60 +89,6 @@ class Day16 : Day() {
         }
 
         return updatedNodes.associateBy { it.name }
-    }
-
-    private fun findMaxVent(
-        currentValve: Valve,
-        tunnelMap: Map<String, Valve>,
-        openableValves: Set<String>,
-        openedValves: List<String>,
-        minutesLeft: Int,
-        bestFound: Int,
-        maxFlow: Int
-    ): Pair<Int, List<String>>? {
-        if (minutesLeft <= 0) {
-            return null
-        }
-
-        if (maxFlow * minutesLeft < bestFound) {
-            return null
-        }
-
-        val currentFlow = totalFlow(openedValves.map { tunnelMap[it]!! })
-        if (openableValves.isEmpty()) {
-            return (minutesLeft * currentFlow) to listOf("Wait $minutesLeft minutes with flow = $currentFlow")
-        }
-
-        var bestResult: Pair<Int, List<String>>? = null
-
-        currentValve.pathsTo
-            .filter { it.destination in openableValves }
-            .forEach { tunnelPath ->
-                val flowDuringMove = currentFlow * tunnelPath.length + currentFlow
-                val target = tunnelMap[tunnelPath.destination]!!
-                if (tunnelPath.length < minutesLeft) {
-                    val moveResult = findMaxVent(
-                        target,
-                        tunnelMap,
-                        openableValves - target.name,
-                        openedValves + target.name,
-                        minutesLeft - tunnelPath.length - 1,
-                        (bestResult?.first ?: bestFound) - flowDuringMove,
-                        maxFlow
-                    )
-                    if (moveResult != null && moveResult.first + flowDuringMove > (bestResult?.first ?: bestFound)) {
-                        bestResult =
-                            (moveResult.first + flowDuringMove) to (moveResult.second.plusElement("Move to and open valve ${tunnelPath.destination}, duration = ${tunnelPath.length + 1} flow = $currentFlow"))
-                    }
-                } else {
-                    val timeoutFlow = currentFlow * minutesLeft
-                    if (timeoutFlow > (bestResult?.first ?: bestFound)) {
-                        bestResult = currentFlow * minutesLeft to listOf("Out of time moving to valve ${tunnelPath.destination}, duration = $minutesLeft, flow = $currentFlow")
-                    }
-                }
-            }
-
-        return bestResult
     }
 
     private fun findMaxVent(
